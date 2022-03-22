@@ -6,9 +6,12 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.viewModelScope
 
 private const val TAG = "MainActivity"
+private const val KEY_INDEX = "index"
 
 class MainActivity : AppCompatActivity() {
     private lateinit var trueButton: Button
@@ -18,21 +21,22 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var questionTextView: TextView
 
-    private val questionBank = listOf(
-        Question(R.string.question_australia, true),
-        Question(R.string.question_oceans, true),
-        Question(R.string.question_mideast, false),
-        Question(R.string.question_africa, false),
-        Question(R.string.question_americas, true),
-        Question(R.string.question_asia, true)
-    )
-    private var currentIndex = 0
+    private val quizViewModel: QuizViewModel by viewModels()
 
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        super.onSaveInstanceState(savedInstanceState)
+        Log.i(TAG,"onSaveInstanceState")
+        savedInstanceState.putInt(KEY_INDEX,quizViewModel.currentIndex)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
 
+        val currentIndex = savedInstanceState?.getInt(KEY_INDEX,0) ?: 0
+        quizViewModel.currentIndex = currentIndex
+
+        Log.d(TAG, "got a quizViewModel $quizViewModel")
         trueButton = findViewById(R.id.true_button)
         falseButton = findViewById(R.id.false_button)
         nextButton = findViewById(R.id.next_button)
@@ -40,23 +44,27 @@ class MainActivity : AppCompatActivity() {
 
         trueButton.setOnClickListener { view: View ->
             checkAnswer(true)
-            isAnswered(currentIndex)
-            if (isAllQuestionsAnswered()) {
-                calculateResults()
-            }
+//            isAnswered(currentIndex)
+//            if (isAllQuestionsAnswered()) {
+//                calculateResults()
+//            }
         }
         falseButton.setOnClickListener { view: View ->
             checkAnswer(false)
-            isAnswered(currentIndex)
-            if (isAllQuestionsAnswered()) {
-                calculateResults()
-            }
+//            isAnswered(currentIndex)
+//            if (isAllQuestionsAnswered()) {
+//                calculateResults()
+//            }
         }
         nextButton.setOnClickListener {
-            moveToNextQuestion()
+            quizViewModel.moveToNext()
+//        isAnswered(currentIndex)
+            updateQuestion()
         }
         questionTextView.setOnClickListener {
-            moveToNextQuestion()
+            quizViewModel.moveToNext()
+//        isAnswered(currentIndex)
+            updateQuestion()
         }
 
         updateQuestion()
@@ -87,54 +95,48 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onDestroy() called")
     }
 
-    private fun moveToNextQuestion() {
-        currentIndex = (currentIndex + 1) % questionBank.size
-        isAnswered(currentIndex)
-        updateQuestion()
-    }
+//    private fun isAnswered(index: Int) {
+//        val isQuestionAnswered = questionBank[index].answered
+//        trueButton.isEnabled = !isQuestionAnswered
+//        falseButton.isEnabled = !isQuestionAnswered
+//    }
 
-    private fun isAnswered(index: Int) {
-        val isQuestionAnswered = questionBank[index].answered
-        trueButton.isEnabled = !isQuestionAnswered
-        falseButton.isEnabled = !isQuestionAnswered
-    }
+//    private fun isAllQuestionsAnswered(): Boolean {
+//        return if(questionBank.lastIndex == currentIndex) {
+//            questionBank.all { it.answered }
+//        } else {
+//            false
+//        }
+//    }
 
-    private fun isAllQuestionsAnswered(): Boolean {
-        return if(questionBank.lastIndex == currentIndex) {
-            questionBank.all { it.answered }
-        } else {
-            false
-        }
-    }
-
-    private fun calculateResults() {
-        val percentOfCorrectAnswers: Int = questionBank.filter {
-            it.isAnswerCorrect == true
-        }.size
-            .times(100)
-            .div(questionBank.size)
-        Toast.makeText(
-            this,
-            "you answered correctly on $percentOfCorrectAnswers% questions",
-            Toast.LENGTH_LONG
-        ).show()
-    }
+//    private fun calculateResults() {
+//        val percentOfCorrectAnswers: Int = questionBank.filter {
+//            it.isAnswerCorrect == true
+//        }.size
+//            .times(100)
+//            .div(questionBank.size)
+//        Toast.makeText(
+//            this,
+//            "you answered correctly on $percentOfCorrectAnswers% questions",
+//            Toast.LENGTH_LONG
+//        ).show()
+//    }
 
     private fun updateQuestion() {
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
     }
 
     private fun checkAnswer(userAnswer: Boolean) {
-        val correctAnswer = questionBank[currentIndex].answer
+        val correctAnswer = quizViewModel.currentQuestionAnswer
         val messageResId: Int
-        questionBank[currentIndex].answered = true
+//        questionBank[currentIndex].answered = true
         if (userAnswer == correctAnswer) {
             messageResId = R.string.correct_toast
-            questionBank[currentIndex].isAnswerCorrect = true
+//            questionBank[currentIndex].isAnswerCorrect = true
         } else {
             messageResId = R.string.incorrect_toast
-            questionBank[currentIndex].isAnswerCorrect = false
+//            questionBank[currentIndex].isAnswerCorrect = false
         }
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
             .show()
