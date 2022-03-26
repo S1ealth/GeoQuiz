@@ -14,7 +14,6 @@ class QuizViewModel : ViewModel() {
         Question(R.string.question_americas, true),
         Question(R.string.question_asia, true)
     )
-
     val currentQuestionAnswer: Boolean
         get() = questionBank[currentIndex].answer
 
@@ -26,22 +25,25 @@ class QuizViewModel : ViewModel() {
         set(value) {
             questionBank[currentIndex].answered = value
         }
-
+    var isQuestionAnswered: Boolean
+        get() = questionBank[currentIndex]?.isAnswerCorrect ?: false
+        set(value) {
+            questionBank[currentIndex].isAnswerCorrect = value
+        }
+    val isAllQuestionsAnswered: Boolean
+        get() = if(questionBank.lastIndex == currentIndex) {
+            questionBank.all { it.answered }
+        } else {
+            false
+        }
     fun moveToNext() {
         currentIndex = (currentIndex + 1) % questionBank.size
     }
 
-    var userAnswer: Boolean?
-        get() = questionBank[currentIndex].userAnswerCorrect
-        set(value) {
-            questionBank[currentIndex].userAnswerCorrect = value
-        }
-
-    val allQuestionsAnswered: Boolean
-        get() = if (questionBank.lastIndex == currentIndex) questionBank.all { it.answered } else false
-
     fun calculatePercentOfCorrectAnswers(): Int = questionBank.filter {
-        it.userAnswerCorrect == true
-    }.size.times(100).div(questionBank.size)
+        it.isAnswerCorrect == true
+    }.size
+        .times(100)
+        .div(questionBank.size)
 
 }
